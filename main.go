@@ -62,6 +62,7 @@ func main() {
 		ReadTimeout:  120 * time.Second,
 	}
 
-	log.Fatal(srv.ListenAndServe())
 	fmt.Println("server listening on: ", c.Server.Port)
+
+	log.Fatal(srv.ListenAndServe())
 }
