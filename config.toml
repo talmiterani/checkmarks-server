@@ -1,0 +1,9 @@
+
+
+[server]
+port = 8001
+
+[mongo]
+connectionString = "mongodb+srv://Tal:miterani3@cluster0.rddtkm7.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
+dbName = "Blog"
+colName = "posts"
