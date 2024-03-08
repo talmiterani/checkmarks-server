@@ -2,6 +2,7 @@ package main
 
 import (
 	"awesomeProject/internal"
+	"awesomeProject/internal/api/comments"
 	"awesomeProject/internal/api/common/access"
 	"awesomeProject/internal/api/posts"
 	"awesomeProject/internal/config"
@@ -28,6 +29,7 @@ func main() {
 
 	appHandlers := []internal.AppHandler{
 		posts.NewHandler(sdc),
+		comments.NewHandler(sdc),
 	}
 
 	for i := 0; i < len(appHandlers); i++ {
