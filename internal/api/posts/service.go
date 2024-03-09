@@ -2,9 +2,10 @@ package posts
 
 import (
 	"awesomeProject/internal/api/common/access"
+	"awesomeProject/internal/api/posts/models"
 	"awesomeProject/internal/api/posts/repo"
 	"context"
-	"go.mongodb.org/mongo-driver/bson/primitive"
+	"time"
 )
 
 type Service struct {
@@ -19,8 +20,37 @@ func NewService(sdc *access.DbConnections) *Service {
 	}
 }
 
-func (s *Service) getMovies(ctx context.Context) ([]primitive.M, error) {
+func (s *Service) getAll(ctx context.Context) ([]models.Post, error) {
 
-	return s.repo.GetMovies(ctx)
+	return s.repo.GetAll(ctx)
 
+}
+
+func (s *Service) add(ctx context.Context, post *models.Post) (*models.Post, error) {
+
+	now := time.Now()
+
+	post.Updated = &now
+
+	newId, err := s.repo.Add(ctx, post)
+
+	if err != nil {
+		return nil, err
+	}
+
+	post.ID = newId
+	return post, nil
+}
+
+func (s *Service) update(ctx context.Context, post *models.Post) (*models.Post, error) {
+
+	now := time.Now()
+
+	post.Updated = &now
+
+	return post, s.repo.Update(ctx, post)
+}
+
+func (s *Service) delete(ctx context.Context, postId string) error {
+	return s.repo.Delete(ctx, postId)
 }
