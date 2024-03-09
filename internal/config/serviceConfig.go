@@ -18,7 +18,12 @@ type Server struct {
 type MongoConfig struct {
 	ConnectionString string
 	DbName           string
-	ColName          string
+	Collections      Collections
+}
+
+type Collections struct {
+	Posts    string
+	Comments string
 }
 
 type Client struct {

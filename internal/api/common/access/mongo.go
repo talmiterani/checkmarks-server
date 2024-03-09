@@ -9,7 +9,8 @@ import (
 )
 
 type Mongo struct {
-	Collection *mongo.Collection
+	Posts    *mongo.Collection
+	Comments *mongo.Collection
 }
 
 func initMongoConnection(c config.MongoConfig) (*Mongo, error) {
@@ -24,9 +25,12 @@ func initMongoConnection(c config.MongoConfig) (*Mongo, error) {
 
 	fmt.Println("MongoDB connection success")
 
-	collection := client.Database(c.DbName).Collection(c.ColName)
+	mongoInstance := &Mongo{
+		Posts:    client.Database(c.DbName).Collection(c.Collections.Posts),
+		Comments: client.Database(c.DbName).Collection(c.Collections.Comments),
+	}
 
-	fmt.Println("Collection instance is ready")
+	fmt.Println("Collections instance is ready")
 
-	return &Mongo{collection}, nil
+	return mongoInstance, nil
 }
