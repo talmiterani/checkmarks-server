@@ -1,11 +1,12 @@
 package main
 
 import (
-	"awesomeProject/internal"
-	"awesomeProject/internal/api/comments"
-	"awesomeProject/internal/api/common/access"
-	"awesomeProject/internal/api/posts"
-	"awesomeProject/internal/config"
+	"checkmarks/internal"
+	"checkmarks/internal/api/comments"
+	"checkmarks/internal/api/common/access"
+	"checkmarks/internal/api/posts"
+	"checkmarks/internal/api/users"
+	"checkmarks/internal/config"
 	"fmt"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
@@ -30,6 +31,7 @@ func main() {
 	appHandlers := []internal.AppHandler{
 		posts.NewHandler(sdc),
 		comments.NewHandler(sdc),
+		users.NewHandler(sdc),
 	}
 
 	for i := 0; i < len(appHandlers); i++ {

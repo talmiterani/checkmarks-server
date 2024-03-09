@@ -1,8 +1,8 @@
 package repo
 
 import (
-	"awesomeProject/internal/api/comments/models"
-	"awesomeProject/internal/api/common/access"
+	"checkmarks/internal/api/comments/models"
+	"checkmarks/internal/api/common/access"
 	"context"
 	"errors"
 	"fmt"

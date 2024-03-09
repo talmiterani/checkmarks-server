@@ -1,4 +1,4 @@
-module awesomeProject
+module checkmarks
 
 go 1.20
 

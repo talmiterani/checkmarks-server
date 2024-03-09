@@ -1,6 +1,6 @@
 package access
 
-import "awesomeProject/internal/config"
+import "checkmarks/internal/config"
 
 type DbConnections struct {
 	Mongo *Mongo

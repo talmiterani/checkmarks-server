@@ -1,9 +1,9 @@
 package comments
 
 import (
-	"awesomeProject/internal/api/comments/models"
-	"awesomeProject/internal/api/common/access"
-	"awesomeProject/internal/utils"
+	"checkmarks/internal/api/comments/models"
+	"checkmarks/internal/api/common/access"
+	"checkmarks/internal/utils"
 	"encoding/json"
 	"fmt"
 	"github.com/gorilla/mux"

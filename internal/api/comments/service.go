@@ -1,9 +1,9 @@
 package comments
 
 import (
-	"awesomeProject/internal/api/comments/models"
-	"awesomeProject/internal/api/comments/repo"
-	"awesomeProject/internal/api/common/access"
+	"checkmarks/internal/api/comments/models"
+	"checkmarks/internal/api/comments/repo"
+	"checkmarks/internal/api/common/access"
 	"context"
 	"time"
 )

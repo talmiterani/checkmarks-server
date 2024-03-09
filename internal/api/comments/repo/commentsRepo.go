@@ -1,7 +1,7 @@
 package repo
 
 import (
-	"awesomeProject/internal/api/comments/models"
+	"checkmarks/internal/api/comments/models"
 	"context"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )

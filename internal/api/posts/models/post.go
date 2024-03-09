@@ -1,7 +1,7 @@
 package models
 
 import (
-	"awesomeProject/internal/api/comments/models"
+	"checkmarks/internal/api/comments/models"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"strings"
 	"time"
@@ -18,7 +18,7 @@ type Post struct {
 
 func (p *Post) Validate(validateAuthor, validateId bool) string {
 
-	if validateAuthor && p.Author == "" { //todo Author should be base on the connected user (author = username)
+	if validateAuthor && p.Author == "" { //todo Author should be base on the connected users (author = username)
 		return "missing author"
 	}
 

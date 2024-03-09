@@ -1,9 +1,9 @@
 package posts
 
 import (
-	"awesomeProject/internal/api/common/access"
-	"awesomeProject/internal/api/posts/models"
-	"awesomeProject/internal/api/posts/repo"
+	"checkmarks/internal/api/common/access"
+	"checkmarks/internal/api/posts/models"
+	"checkmarks/internal/api/posts/repo"
 	"context"
 	"time"
 )

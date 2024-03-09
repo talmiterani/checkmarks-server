@@ -16,7 +16,7 @@ type Comment struct {
 
 func (c *Comment) Validate(validateAuthor, validatePostId, validateId bool) string {
 
-	if validateAuthor && c.Author == "" { //todo Author should be base on the connected user (author = username)
+	if validateAuthor && c.Author == "" { //todo Author should be base on the connected users (author = username)
 		return "missing author"
 	}
 

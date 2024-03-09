@@ -1,8 +1,8 @@
 package repo
 
 import (
-	"awesomeProject/internal/api/common/access"
-	"awesomeProject/internal/api/posts/models"
+	"checkmarks/internal/api/common/access"
+	"checkmarks/internal/api/posts/models"
 	"context"
 	"errors"
 	"fmt"
