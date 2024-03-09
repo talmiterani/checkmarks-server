@@ -38,7 +38,7 @@ func (s *Service) add(ctx context.Context, post *models.Post) (*models.Post, err
 		return nil, err
 	}
 
-	post.ID = newId
+	post.Id = newId
 	return post, nil
 }
 

@@ -8,7 +8,7 @@ import (
 )
 
 type Post struct {
-	ID       *primitive.ObjectID `json:"id,omitempty"  bson:"_id,omitempty"`
+	Id       *primitive.ObjectID `json:"id,omitempty"  bson:"_id,omitempty"`
 	Author   string              `json:"author,omitempty" bson:"author"`
 	Content  string              `json:"content,omitempty" bson:"content"`
 	Comments []models.Comment    `json:"comments,omitempty" bson:"comments"`

@@ -11,5 +11,4 @@ type PostsRepo interface {
 	Add(ctx context.Context, post *models.Post) (*primitive.ObjectID, error)
 	Update(ctx context.Context, post *models.Post) error
 	Delete(ctx context.Context, postId string) error
-	DeleteAll(ctx context.Context)
 }

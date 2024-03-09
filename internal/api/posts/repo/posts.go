@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"log"
 )
 
 type PostsDb struct {
@@ -64,7 +63,7 @@ func (p *PostsDb) Add(ctx context.Context, post *models.Post) (*primitive.Object
 
 func (p *PostsDb) Update(ctx context.Context, post *models.Post) error {
 
-	filter := bson.M{"_id": post.ID}
+	filter := bson.M{"_id": post.Id}
 	update := bson.D{{"$set", post}}
 
 	res, err := p.Mongo.Collection.UpdateOne(ctx, filter, update)
@@ -96,12 +95,4 @@ func (p *PostsDb) Delete(ctx context.Context, postId string) error {
 	fmt.Printf("deleted post count: %v, post id: %s", deleteCnt, postId)
 
 	return nil
-}
-
-func (p *PostsDb) DeleteAll(ctx context.Context) {
-	res, err := p.Mongo.Collection.DeleteMany(ctx, bson.D{{}})
-	if err != nil {
-		log.Fatal(err)
-	}
-	fmt.Println("deleted posts count : ", res)
 }
