@@ -20,7 +20,7 @@ func New(sdc *access.DbConnections) PostsRepo {
 
 func (p *PostsDb) GetAll(ctx context.Context) ([]models.Post, error) {
 
-	cur, err := p.Mongo.Collection.Find(ctx, bson.D{{}})
+	cur, err := p.Mongo.Posts.Find(ctx, bson.D{{}})
 
 	if err != nil {
 		return nil, err
@@ -46,7 +46,7 @@ func (p *PostsDb) GetAll(ctx context.Context) ([]models.Post, error) {
 
 func (p *PostsDb) Add(ctx context.Context, post *models.Post) (*primitive.ObjectID, error) {
 
-	inserted, err := p.Mongo.Collection.InsertOne(ctx, post)
+	inserted, err := p.Mongo.Posts.InsertOne(ctx, post)
 	if err != nil {
 		return nil, err
 	}
@@ -64,9 +64,13 @@ func (p *PostsDb) Add(ctx context.Context, post *models.Post) (*primitive.Object
 func (p *PostsDb) Update(ctx context.Context, post *models.Post) error {
 
 	filter := bson.M{"_id": post.Id}
-	update := bson.D{{"$set", post}}
+	update := bson.M{"$set": bson.M{
+		"content": post.Content,
+		"title":   post.Title,
+		"updated": post.Updated,
+	}}
 
-	res, err := p.Mongo.Collection.UpdateOne(ctx, filter, update)
+	res, err := p.Mongo.Posts.UpdateOne(ctx, filter, update)
 
 	if err != nil {
 		return err
@@ -87,7 +91,7 @@ func (p *PostsDb) Delete(ctx context.Context, postId string) error {
 
 	filter := bson.M{"_id": id}
 
-	deleteCnt, err := p.Mongo.Collection.DeleteOne(ctx, filter)
+	deleteCnt, err := p.Mongo.Posts.DeleteOne(ctx, filter)
 
 	if err != nil {
 		return err

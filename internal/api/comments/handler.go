@@ -1,8 +1,10 @@
 package comments
 
 import (
+	"awesomeProject/internal/api/comments/models"
 	"awesomeProject/internal/api/common/access"
 	"awesomeProject/internal/utils"
+	"encoding/json"
 	"fmt"
 	"github.com/gorilla/mux"
 	"net/http"
@@ -24,9 +26,13 @@ func NewHandler(sdc *access.DbConnections) *Handler {
 }
 
 func (h *Handler) Init(router *mux.Router) { //, auth security.AuthHandler) {
-	router.HandleFunc("/v1/{postId}/comments", h.getComments).Methods("GET")
+	router.HandleFunc("/v1/comments/{postId}", h.getAll).Methods("GET")
+	router.HandleFunc("/v1/comments", h.add).Methods("POST")
+	router.HandleFunc("/v1/comments", h.update).Methods("PUT")
+	router.HandleFunc("/v1/comments/{commentId}", h.delete).Methods("DELETE")
 }
-func (h *Handler) getComments(w http.ResponseWriter, r *http.Request) {
+
+func (h *Handler) getAll(w http.ResponseWriter, r *http.Request) {
 
 	var (
 		params = mux.Vars(r)
@@ -43,4 +49,84 @@ func (h *Handler) getComments(w http.ResponseWriter, r *http.Request) {
 	}
 
 	utils.WriteJson(res, w)
+}
+
+func (h *Handler) add(w http.ResponseWriter, r *http.Request) {
+
+	var (
+		comment models.Comment
+	)
+
+	if decodeErr := json.NewDecoder(r.Body).Decode(&comment); decodeErr != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(decodeErr.Error()))
+		return
+	}
+
+	comment.Prepare()
+
+	if valRes := comment.Validate(true, true, false); len(valRes) > 0 {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(valRes))
+		return
+	}
+
+	res, err := h.service.add(r.Context(), &comment)
+
+	if err != nil {
+		fmt.Println("add comment error: ", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		utils.WriteJson(err, w)
+		return
+	}
+
+	utils.WriteJson(res, w)
+}
+
+func (h *Handler) update(w http.ResponseWriter, r *http.Request) {
+
+	var (
+		comment models.Comment
+	)
+
+	if decodeErr := json.NewDecoder(r.Body).Decode(&comment); decodeErr != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(decodeErr.Error()))
+		return
+	}
+
+	comment.Prepare()
+	if valRes := comment.Validate(false, false, true); len(valRes) > 0 {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(valRes))
+		return
+	}
+
+	res, err := h.service.update(r.Context(), &comment)
+
+	if err != nil {
+		fmt.Println("update comment error: ", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		utils.WriteJson(err, w)
+		return
+	}
+
+	utils.WriteJson(res, w)
+}
+
+func (h *Handler) delete(w http.ResponseWriter, r *http.Request) {
+
+	var (
+		params    = mux.Vars(r)
+		commentId = params["commentId"]
+	)
+
+	if err := h.service.delete(r.Context(), commentId); err != nil {
+		fmt.Println("delete post error: ", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		utils.WriteJson(err, w)
+		return
+	}
+
+	w.Write(utils.OK)
 }

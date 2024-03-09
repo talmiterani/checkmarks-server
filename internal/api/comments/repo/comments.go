@@ -1,13 +1,13 @@
 package repo
 
 import (
+	"awesomeProject/internal/api/comments/models"
 	"awesomeProject/internal/api/common/access"
-	"awesomeProject/internal/api/posts/models"
 	"context"
+	"errors"
 	"fmt"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"log"
 )
 
 type CommentsDb struct {
@@ -18,23 +18,85 @@ func New(sdc *access.DbConnections) CommentsRepo {
 	return &CommentsDb{sdc}
 }
 
-func (p *CommentsDb) GetComments(ctx context.Context, postId string) ([]primitive.M, error) {
+func (c *CommentsDb) GetComments(ctx context.Context, postId string) ([]models.Comment, error) {
 
-	postID, err := primitive.ObjectIDFromHex(postId)
+	cur, err := c.Mongo.Comments.Find(ctx, bson.D{{}})
+
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 
-	// Find the post by ID
-	var post models.Post
-	err = p.Mongo.Collection.FindOne(ctx, bson.M{"_id": postID}).Decode(&post)
+	var comments []models.Comment
+
+	defer cur.Close(ctx)
+
+	for cur.Next(ctx) {
+		var comment models.Comment
+
+		err = cur.Decode(&comment)
+
+		if err != nil {
+			return nil, err
+		}
+		comments = append(comments, comment)
+	}
+
+	return comments, err
+}
+
+func (c *CommentsDb) Add(ctx context.Context, comment *models.Comment) (*primitive.ObjectID, error) {
+
+	inserted, err := c.Mongo.Comments.InsertOne(ctx, comment)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 
-	// Print all comments for the post
-	for _, comment := range post.Comments {
-		fmt.Printf("Author: %s\nContent: %s\nCreation Date: %s\n\n", comment.Author, comment.Content, comment.CreationDate)
+	insertedID, ok := inserted.InsertedID.(primitive.ObjectID)
+	if !ok {
+		return nil, errors.New("failed to convert InsertedID to ObjectID")
 	}
-	return nil, nil
+
+	fmt.Println("added new comment: ", inserted)
+
+	return &insertedID, nil
+
+}
+
+func (c *CommentsDb) Update(ctx context.Context, comment *models.Comment) error {
+
+	filter := bson.M{"_id": comment.Id}
+	update := bson.M{"$set": bson.M{
+		"content": comment.Content,
+		"updated": comment.Updated,
+	}}
+
+	res, err := c.Mongo.Comments.UpdateOne(ctx, filter, update)
+
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("updated comment: ", res)
+
+	return nil
+}
+
+func (c *CommentsDb) Delete(ctx context.Context, commentId string) error {
+
+	id, err := primitive.ObjectIDFromHex(commentId)
+
+	if err != nil {
+		return err
+	}
+
+	filter := bson.M{"_id": id}
+
+	deleteCnt, err := c.Mongo.Comments.DeleteOne(ctx, filter)
+
+	if err != nil {
+		return err
+	}
+	fmt.Printf("deleted post count: %v, comment id: %s", deleteCnt, commentId)
+
+	return nil
 }

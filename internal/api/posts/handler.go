@@ -33,19 +33,6 @@ func (h *Handler) Init(router *mux.Router) { //, auth security.AuthHandler) {
 
 }
 
-//	var RegisterBookStoreRoutes = func(router *mux.Router) { //, auth security.AuthHandler) {
-//		router.HandleFunc("/v1/posts", CreateBook).Methods("POST")
-//	}
-//
-//	func CreateBook(writer http.ResponseWriter, r *http.Request) {
-//		CreateBook := &models.Post{}
-//		reqBody, _ := io.ReadAll(r.Body)
-//		r.Body.Close()
-//		err := json.Unmarshal(reqBody, CreateBook)
-//		if err != nil {
-//			return
-//		}
-//	}
 func (h *Handler) getAll(w http.ResponseWriter, r *http.Request) {
 
 	res, err := h.service.getAll(r.Context())
@@ -73,7 +60,7 @@ func (h *Handler) add(w http.ResponseWriter, r *http.Request) {
 	}
 
 	post.Prepare()
-	if valRes := post.Validate(); len(valRes) > 0 {
+	if valRes := post.Validate(true, false); len(valRes) > 0 {
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte(valRes))
 		return
@@ -104,7 +91,7 @@ func (h *Handler) update(w http.ResponseWriter, r *http.Request) {
 	}
 
 	post.Prepare()
-	if valRes := post.Validate(); len(valRes) > 0 {
+	if valRes := post.Validate(false, true); len(valRes) > 0 {
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte(valRes))
 		return

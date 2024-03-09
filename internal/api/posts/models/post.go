@@ -16,9 +16,9 @@ type Post struct {
 	Updated  *time.Time          `json:"updated,omitempty" bson:"updated"`
 }
 
-func (p *Post) Validate() string {
+func (p *Post) Validate(validateAuthor, validateId bool) string {
 
-	if p.Author == "" {
+	if validateAuthor && p.Author == "" { //todo Author should be base on the connected user (author = username)
 		return "missing author"
 	}
 
@@ -28,6 +28,10 @@ func (p *Post) Validate() string {
 
 	if p.Content == "" {
 		return "missing content"
+	}
+
+	if validateId && p.Id == nil {
+		return "missing post id"
 	}
 	return ""
 }
