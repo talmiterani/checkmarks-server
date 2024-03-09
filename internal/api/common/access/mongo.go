@@ -1,7 +1,7 @@
 package access
 
 import (
-	"awesomeProject/internal/config"
+	"checkmarks/internal/config"
 	"context"
 	"fmt"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -11,6 +11,7 @@ import (
 type Mongo struct {
 	Posts    *mongo.Collection
 	Comments *mongo.Collection
+	Users    *mongo.Collection
 }
 
 func initMongoConnection(c config.MongoConfig) (*Mongo, error) {
@@ -28,6 +29,7 @@ func initMongoConnection(c config.MongoConfig) (*Mongo, error) {
 	mongoInstance := &Mongo{
 		Posts:    client.Database(c.DbName).Collection(c.Collections.Posts),
 		Comments: client.Database(c.DbName).Collection(c.Collections.Comments),
+		Users:    client.Database(c.DbName).Collection(c.Collections.Users),
 	}
 
 	fmt.Println("Collections instance is ready")

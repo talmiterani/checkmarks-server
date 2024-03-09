@@ -24,6 +24,7 @@ type MongoConfig struct {
 type Collections struct {
 	Posts    string
 	Comments string
+	Users    string
 }
 
 type Client struct {
