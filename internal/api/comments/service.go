@@ -20,9 +20,9 @@ func NewService(sdc *access.DbConnections) *Service {
 	}
 }
 
-func (s *Service) getComments(ctx context.Context, postId string) ([]models.Comment, error) {
+func (s *Service) getByPostId(ctx context.Context, postId string) ([]models.Comment, error) {
 
-	return s.repo.GetComments(ctx, postId)
+	return s.repo.GetByPostId(ctx, postId)
 
 }
 

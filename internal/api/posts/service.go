@@ -2,9 +2,11 @@ package posts
 
 import (
 	"checkmarks/internal/api/common/access"
+	commonModels "checkmarks/internal/api/common/models"
 	"checkmarks/internal/api/posts/models"
 	"checkmarks/internal/api/posts/repo"
 	"context"
+	"go.mongodb.org/mongo-driver/bson"
 	"time"
 )
 
@@ -20,10 +22,16 @@ func NewService(sdc *access.DbConnections) *Service {
 	}
 }
 
-func (s *Service) getAll(ctx context.Context) ([]models.Post, error) {
+func (s *Service) search(ctx context.Context, req *commonModels.SearchReq) ([]models.SearchPostsRes, error) {
+	return s.repo.Search(ctx, req)
+}
 
-	return s.repo.GetAll(ctx)
+//func (s *Service) search(ctx context.Context, req *commonModels.SearchReq) ([]models.Post, error) {
+//	return s.repo.Search(ctx, req)
+//}
 
+func (s *Service) get(ctx context.Context, postId string) (*bson.M, error) {
+	return s.repo.Get(ctx, postId)
 }
 
 func (s *Service) add(ctx context.Context, post *models.Post) (*models.Post, error) {

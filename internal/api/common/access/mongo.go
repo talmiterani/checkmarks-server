@@ -36,3 +36,8 @@ func initMongoConnection(c config.MongoConfig) (*Mongo, error) {
 
 	return mongoInstance, nil
 }
+
+const (
+	ObjectIDFromHexInvalidErr  = "the provided hex string is not a valid ObjectID"
+	ObjectIDFromHexInvalidByte = "encoding/hex: invalid byte: U+006E"
+)

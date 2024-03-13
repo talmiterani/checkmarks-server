@@ -7,10 +7,10 @@ import (
 )
 
 type Comment struct {
-	Author  string              `bson:"author"`
-	Content string              `bson:"content"`
+	Author  string              `json:"author" bson:"author,omitempty"`
+	Content string              `json:"content" bson:"content,omitempty"`
 	Id      *primitive.ObjectID `json:"id,omitempty"  bson:"_id,omitempty"`
-	PostId  string              `json:"post_id,omitempty"`
+	PostId  *primitive.ObjectID `json:"post_id,omitempty"  bson:"_postId,omitempty"`
 	Updated *time.Time          `json:"updated,omitempty" bson:"updated"`
 }
 
@@ -24,7 +24,7 @@ func (c *Comment) Validate(validateAuthor, validatePostId, validateId bool) stri
 		return "missing content"
 	}
 
-	if validatePostId && c.PostId == "" {
+	if validatePostId && c.PostId == nil {
 		return "missing post id"
 	}
 

@@ -1,19 +1,17 @@
 package models
 
 import (
-	"checkmarks/internal/api/comments/models"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"strings"
 	"time"
 )
 
 type Post struct {
-	Id       *primitive.ObjectID `json:"id,omitempty"  bson:"_id,omitempty"`
-	Author   string              `json:"author,omitempty" bson:"author"`
-	Content  string              `json:"content,omitempty" bson:"content"`
-	Comments []models.Comment    `json:"comments,omitempty" bson:"comments"`
-	Title    string              `json:"title,omitempty" bson:"title"`
-	Updated  *time.Time          `json:"updated,omitempty" bson:"updated"`
+	Id      *primitive.ObjectID `json:"id,omitempty"  bson:"_id,omitempty"`
+	Author  string              `json:"author,omitempty" bson:"author"`
+	Content string              `json:"content,omitempty" bson:"content"`
+	Title   string              `json:"title,omitempty" bson:"title"`
+	Updated *time.Time          `json:"updated,omitempty" bson:"updated"`
 }
 
 func (p *Post) Validate(validateAuthor, validateId bool) string {

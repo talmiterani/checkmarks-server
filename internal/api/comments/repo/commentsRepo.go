@@ -7,7 +7,7 @@ import (
 )
 
 type CommentsRepo interface {
-	GetComments(ctx context.Context, postId string) ([]models.Comment, error)
+	GetByPostId(ctx context.Context, postId string) ([]models.Comment, error)
 	Add(ctx context.Context, comment *models.Comment) (*primitive.ObjectID, error)
 	Update(ctx context.Context, comment *models.Comment) error
 	Delete(ctx context.Context, commentId string) error

@@ -26,20 +26,20 @@ func NewHandler(sdc *access.DbConnections) *Handler {
 }
 
 func (h *Handler) Init(router *mux.Router) { //, auth security.AuthHandler) {
-	router.HandleFunc("/v1/comments/{postId}", h.getAll).Methods("GET")
+	router.HandleFunc("/v1/comments/{postId}", h.getByPostId).Methods("GET")
 	router.HandleFunc("/v1/comments", h.add).Methods("POST")
 	router.HandleFunc("/v1/comments", h.update).Methods("PUT")
-	router.HandleFunc("/v1/comments/{commentId}", h.delete).Methods("DELETE")
+	router.HandleFunc("/v1/comments/comment/{commentId}", h.delete).Methods("DELETE")
 }
 
-func (h *Handler) getAll(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) getByPostId(w http.ResponseWriter, r *http.Request) {
 
 	var (
 		params = mux.Vars(r)
 		postId = params["postId"]
 	)
 
-	res, err := h.service.getComments(r.Context(), postId)
+	res, err := h.service.getByPostId(r.Context(), postId)
 	if err != nil {
 		fmt.Println("get movies error: ", err)
 		w.WriteHeader(http.StatusInternalServerError)

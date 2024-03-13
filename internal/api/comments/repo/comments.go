@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type CommentsDb struct {
@@ -18,9 +19,12 @@ func New(sdc *access.DbConnections) CommentsRepo {
 	return &CommentsDb{sdc}
 }
 
-func (c *CommentsDb) GetComments(ctx context.Context, postId string) ([]models.Comment, error) {
+func (c *CommentsDb) GetByPostId(ctx context.Context, postId string) ([]models.Comment, error) {
 
-	cur, err := c.Mongo.Comments.Find(ctx, bson.D{{}})
+	filter := bson.M{"postId": postId}
+	sortOptions := options.Find().SetSort(bson.D{{"updated", -1}})
+
+	cur, err := c.Mongo.Comments.Find(ctx, filter, sortOptions)
 
 	if err != nil {
 		return nil, err

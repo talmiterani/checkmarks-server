@@ -2,12 +2,14 @@ package repo
 
 import (
 	"checkmarks/internal/api/common/access"
+	commonModels "checkmarks/internal/api/common/models"
 	"checkmarks/internal/api/posts/models"
 	"context"
 	"errors"
 	"fmt"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"strings"
 )
 
 type PostsDb struct {
@@ -18,30 +20,177 @@ func New(sdc *access.DbConnections) PostsRepo {
 	return &PostsDb{sdc}
 }
 
-func (p *PostsDb) GetAll(ctx context.Context) ([]models.Post, error) {
+func (p *PostsDb) Search(ctx context.Context, req *commonModels.SearchReq) ([]models.SearchPostsRes, error) {
 
-	cur, err := p.Mongo.Posts.Find(ctx, bson.D{{}})
+	//sortOptions := options.Find().SetSort(bson.D{{"updated", -1}})
+	//pageOptions := options.Find().SetSkip(int64((req.Page - 1) * req.PageSize)).SetLimit(int64(req.PageSize))
+
+	//var query = bson.D{{}}
+	//if req.Query != "" {
+	//	query = bson.D{
+	//		{"$or", bson.A{
+	//			bson.D{{"title", bson.D{{"$regex", primitive.Regex{Pattern: req.Query, Options: "i"}}}}},
+	//			bson.D{{"content", bson.D{{"$regex", primitive.Regex{Pattern: req.Query, Options: "i"}}}}},
+	//		}},
+	//	}
+	//}
+
+	pipeline := bson.A{
+		bson.M{
+			"$match": bson.M{
+				"$or": bson.A{
+					bson.M{"title": primitive.Regex{Pattern: req.Query, Options: "i"}},
+					bson.M{"content": primitive.Regex{Pattern: req.Query, Options: "i"}},
+				},
+			},
+		},
+		bson.M{
+			"$sort": bson.M{"updated": -1},
+		},
+		bson.M{
+			"$skip": (req.Page - 1) * req.PageSize,
+		},
+		bson.M{
+			"$limit": req.PageSize,
+		},
+		bson.M{
+			"$lookup": bson.D{
+				{"from", "comments"},
+				{"localField", "_id"},
+				{"foreignField", "postId"},
+				{"as", "comments"},
+			},
+		},
+		bson.M{
+			"$project": bson.M{
+				"_id":          1,
+				"author":       1,
+				"title":        1,
+				"content":      1,
+				"updated":      1,
+				"comments_cnt": bson.M{"$size": "$comments"},
+			},
+		},
+	}
+
+	cur, err := p.Mongo.Posts.Aggregate(ctx, pipeline)
 
 	if err != nil {
 		return nil, err
 	}
-
-	var posts []models.Post
-
 	defer cur.Close(ctx)
 
+	var posts []models.SearchPostsRes
 	for cur.Next(ctx) {
-		var post models.Post
-
+		var post models.SearchPostsRes
 		err = cur.Decode(&post)
-
 		if err != nil {
 			return nil, err
 		}
 		posts = append(posts, post)
 	}
 
-	return posts, err
+	return posts, nil
+}
+
+//func (p *PostsDb) Search(ctx context.Context, req *commonModels.SearchReq) ([]models.Post, error) {
+//
+//	sortOptions := options.Find().SetSort(bson.D{{"updated", -1}})
+//	pageOptions := options.Find().SetSkip(int64((req.Page - 1) * req.PageSize)).SetLimit(int64(req.PageSize))
+//
+//	var query = bson.D{{}}
+//	if req.Query != "" {
+//		query = bson.D{
+//			{"$or", bson.A{
+//				bson.D{{"title", bson.D{{"$regex", primitive.Regex{Pattern: req.Query, Options: "i"}}}}},
+//				bson.D{{"content", bson.D{{"$regex", primitive.Regex{Pattern: req.Query, Options: "i"}}}}},
+//			}},
+//		}
+//	}
+//
+//	optionsSlice := make([]*options.FindOptions, 0)
+//	optionsSlice = append(optionsSlice, sortOptions, pageOptions)
+//
+//	cur, err := p.Mongo.Posts.Find(ctx, query, optionsSlice...)
+//
+//	if err != nil {
+//		return nil, err
+//	}
+//	defer cur.Close(ctx)
+//
+//	var posts []models.Post
+//	for cur.Next(ctx) {
+//		var post models.Post
+//		err := cur.Decode(&post)
+//		if err != nil {
+//			return nil, err
+//		}
+//		posts = append(posts, post)
+//	}
+//
+//	return posts, nil
+//}
+
+func (p *PostsDb) Get(ctx context.Context, postId string) (*bson.M, error) {
+
+	postID, err := primitive.ObjectIDFromHex(postId)
+	if err != nil {
+
+		if err.Error() == access.ObjectIDFromHexInvalidErr || strings.Contains(err.Error(), access.ObjectIDFromHexInvalidByte) {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	// Define the pipeline with $lookup stage
+	pipeline := bson.A{
+		bson.M{
+			"$match": bson.M{"_id": postID},
+		},
+		bson.M{
+			"$lookup": bson.M{
+				"from":         "comments",
+				"localField":   "_id",
+				"foreignField": "_postId",
+				"as":           "comments",
+			},
+		},
+		bson.M{
+			"$unwind": "$comments",
+		},
+		bson.M{
+			"$sort": bson.M{"comments.updated": -1},
+		},
+		bson.M{
+			"$group": bson.M{
+				"_id":           "$_id",
+				"author":        bson.M{"$first": "$author"},
+				"content":       bson.M{"$first": "$content"},
+				"creation_date": bson.M{"$first": "$creation_date"},
+				"comments":      bson.M{"$push": "$comments"},
+				"title":         bson.M{"$first": "$title"},
+			},
+		},
+	}
+
+	// Use aggregate with the defined pipeline
+	cur, err := p.DbConnections.Mongo.Posts.Aggregate(ctx, pipeline)
+	if err != nil {
+		return nil, err
+	}
+	defer cur.Close(ctx)
+
+	// Decode the result
+	var results []bson.M
+	if err := cur.All(ctx, &results); err != nil {
+		return nil, err
+	}
+
+	if len(results) == 0 {
+		return nil, nil
+	}
+
+	return &results[0], nil
 }
 
 func (p *PostsDb) Add(ctx context.Context, post *models.Post) (*primitive.ObjectID, error) {
