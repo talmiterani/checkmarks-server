@@ -93,44 +93,6 @@ func (p *PostsDb) Search(ctx context.Context, req *commonModels.SearchReq) ([]mo
 	return posts, nil
 }
 
-//func (p *PostsDb) Search(ctx context.Context, req *commonModels.SearchReq) ([]models.Post, error) {
-//
-//	sortOptions := options.Find().SetSort(bson.D{{"updated", -1}})
-//	pageOptions := options.Find().SetSkip(int64((req.Page - 1) * req.PageSize)).SetLimit(int64(req.PageSize))
-//
-//	var query = bson.D{{}}
-//	if req.Query != "" {
-//		query = bson.D{
-//			{"$or", bson.A{
-//				bson.D{{"title", bson.D{{"$regex", primitive.Regex{Pattern: req.Query, Options: "i"}}}}},
-//				bson.D{{"content", bson.D{{"$regex", primitive.Regex{Pattern: req.Query, Options: "i"}}}}},
-//			}},
-//		}
-//	}
-//
-//	optionsSlice := make([]*options.FindOptions, 0)
-//	optionsSlice = append(optionsSlice, sortOptions, pageOptions)
-//
-//	cur, err := p.Mongo.Posts.Find(ctx, query, optionsSlice...)
-//
-//	if err != nil {
-//		return nil, err
-//	}
-//	defer cur.Close(ctx)
-//
-//	var posts []models.Post
-//	for cur.Next(ctx) {
-//		var post models.Post
-//		err := cur.Decode(&post)
-//		if err != nil {
-//			return nil, err
-//		}
-//		posts = append(posts, post)
-//	}
-//
-//	return posts, nil
-//}
-
 func (p *PostsDb) Get(ctx context.Context, postId string) (*bson.M, error) {
 
 	postID, err := primitive.ObjectIDFromHex(postId)
@@ -166,12 +128,12 @@ func (p *PostsDb) Get(ctx context.Context, postId string) (*bson.M, error) {
 		},
 		bson.M{
 			"$group": bson.M{
-				"_id":           "$_id",
-				"author":        bson.M{"$first": "$author"},
-				"content":       bson.M{"$first": "$content"},
-				"creation_date": bson.M{"$first": "$creation_date"},
-				"comments":      bson.M{"$push": "$comments"},
-				"title":         bson.M{"$first": "$title"},
+				"_id":      "$_id",
+				"author":   bson.M{"$first": "$author"},
+				"content":  bson.M{"$first": "$content"},
+				"updated":  bson.M{"$first": "$updated"},
+				"comments": bson.M{"$push": "$comments"},
+				"title":    bson.M{"$first": "$title"},
 			},
 		},
 	}
@@ -250,6 +212,16 @@ func (p *PostsDb) Delete(ctx context.Context, postId string) error {
 		return err
 	}
 	fmt.Printf("deleted post count: %v, post id: %s", deleteCnt, postId)
+
+	// Filter to delete comments associated with the post
+	commentsFilter := bson.M{"_postId": id}
+
+	// Delete comments associated with the post
+	deleteCommentsCnt, err := p.Mongo.Comments.DeleteMany(ctx, commentsFilter)
+	if err != nil {
+		return err
+	}
+	fmt.Printf("Deleted comments count: %v, post id: %s\n", deleteCommentsCnt, postId)
 
 	return nil
 }
