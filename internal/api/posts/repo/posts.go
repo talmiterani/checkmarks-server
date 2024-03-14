@@ -22,19 +22,6 @@ func New(sdc *access.DbConnections) PostsRepo {
 
 func (p *PostsDb) Search(ctx context.Context, req *commonModels.SearchReq) ([]models.SearchPostsRes, error) {
 
-	//sortOptions := options.Find().SetSort(bson.D{{"updated", -1}})
-	//pageOptions := options.Find().SetSkip(int64((req.Page - 1) * req.PageSize)).SetLimit(int64(req.PageSize))
-
-	//var query = bson.D{{}}
-	//if req.Query != "" {
-	//	query = bson.D{
-	//		{"$or", bson.A{
-	//			bson.D{{"title", bson.D{{"$regex", primitive.Regex{Pattern: req.Query, Options: "i"}}}}},
-	//			bson.D{{"content", bson.D{{"$regex", primitive.Regex{Pattern: req.Query, Options: "i"}}}}},
-	//		}},
-	//	}
-	//}
-
 	pipeline := bson.A{
 		bson.M{
 			"$match": bson.M{
@@ -57,7 +44,7 @@ func (p *PostsDb) Search(ctx context.Context, req *commonModels.SearchReq) ([]mo
 			"$lookup": bson.D{
 				{"from", "comments"},
 				{"localField", "_id"},
-				{"foreignField", "postId"},
+				{"foreignField", "_postId"},
 				{"as", "comments"},
 			},
 		},
