@@ -156,7 +156,10 @@ func (p *PostsDb) Get(ctx context.Context, postId string) (*bson.M, error) {
 			},
 		},
 		bson.M{
-			"$unwind": "$comments",
+			"$unwind": bson.M{
+				"path":                       "$comments",
+				"preserveNullAndEmptyArrays": true,
+			},
 		},
 		bson.M{
 			"$sort": bson.M{"comments.updated": -1},
@@ -214,6 +217,7 @@ func (p *PostsDb) Update(ctx context.Context, post *models.Post) error {
 
 	filter := bson.M{"_id": post.Id}
 	update := bson.M{"$set": bson.M{
+		"author":  post.Author,
 		"content": post.Content,
 		"title":   post.Title,
 		"updated": post.Updated,

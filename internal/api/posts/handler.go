@@ -91,7 +91,7 @@ func (h *Handler) add(w http.ResponseWriter, r *http.Request) {
 	}
 
 	post.Prepare()
-	if valRes := post.Validate(true, false); len(valRes) > 0 {
+	if valRes := post.Validate(false); len(valRes) > 0 {
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte(valRes))
 		return
@@ -122,7 +122,7 @@ func (h *Handler) update(w http.ResponseWriter, r *http.Request) {
 	}
 
 	post.Prepare()
-	if valRes := post.Validate(false, true); len(valRes) > 0 {
+	if valRes := post.Validate(true); len(valRes) > 0 {
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte(valRes))
 		return

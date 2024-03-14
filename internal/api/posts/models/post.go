@@ -14,9 +14,9 @@ type Post struct {
 	Updated *time.Time          `json:"updated,omitempty" bson:"updated"`
 }
 
-func (p *Post) Validate(validateAuthor, validateId bool) string {
+func (p *Post) Validate(validateId bool) string {
 
-	if validateAuthor && p.Author == "" { //todo Author should be base on the connected users (author = username)
+	if p.Author == "" {
 		return "missing author"
 	}
 
@@ -35,6 +35,7 @@ func (p *Post) Validate(validateAuthor, validateId bool) string {
 }
 
 func (p *Post) Prepare() {
+	p.Author = strings.TrimSpace(p.Author)
 	p.Title = strings.TrimSpace(p.Title)
 	p.Content = strings.TrimSpace(p.Content)
 }
