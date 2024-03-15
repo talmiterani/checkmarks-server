@@ -93,7 +93,7 @@ func (h *Handler) signup(w http.ResponseWriter, r *http.Request) {
 		utils.WriteJson(err, w)
 	}
 
-	utils.WriteJson(map[string]string{"token": tokenString}, w)
+	utils.WriteJson(map[string]string{"token": tokenString, "userId": user.Id.Hex()}, w)
 }
 
 func (h *Handler) login(w http.ResponseWriter, r *http.Request) {
@@ -144,7 +144,7 @@ func (h *Handler) login(w http.ResponseWriter, r *http.Request) {
 		utils.WriteJson(err, w)
 	}
 
-	utils.WriteJson(map[string]string{"token": tokenString}, w)
+	utils.WriteJson(map[string]string{"token": tokenString, "userId": user.Id.Hex()}, w)
 }
 
 func createToken(username string, id *primitive.ObjectID) (string, error) {
