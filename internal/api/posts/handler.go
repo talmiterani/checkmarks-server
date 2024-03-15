@@ -4,10 +4,12 @@ import (
 	"checkmarks/internal/api/common/access"
 	commonModels "checkmarks/internal/api/common/models"
 	"checkmarks/internal/api/posts/models"
+	"checkmarks/internal/security"
 	"checkmarks/internal/utils"
 	"encoding/json"
 	"fmt"
 	"github.com/gorilla/mux"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"net/http"
 )
 
@@ -29,9 +31,9 @@ func NewHandler(sdc *access.DbConnections) *Handler {
 func (h *Handler) Init(router *mux.Router) { //, auth security.AuthHandler) {
 	router.HandleFunc("/v1/posts/search", h.search).Methods("POST")
 	router.HandleFunc("/v1/posts/post/{postId}", h.get).Methods("GET")
-	router.HandleFunc("/v1/posts", h.add).Methods("POST")
-	router.HandleFunc("/v1/posts", h.update).Methods("PUT")
-	router.HandleFunc("/v1/posts/post/{postId}", h.delete).Methods("DELETE")
+	router.HandleFunc("/v1/posts", security.RequireAuth(h.add)).Methods("POST")
+	router.HandleFunc("/v1/posts", security.RequireAuth(h.update)).Methods("PUT")
+	router.HandleFunc("/v1/posts/post/{postId}", security.RequireAuth(h.delete)).Methods("DELETE")
 
 }
 
@@ -97,6 +99,40 @@ func (h *Handler) add(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	claims, err := security.ExtractTokenInfo(r)
+
+	if err != nil {
+		fmt.Println("fail to parse token error: ", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		utils.WriteJson(err, w)
+		return
+	}
+
+	idClaim, ok := claims["id"]
+	if !ok {
+		fmt.Println("id claim not found in token")
+		w.WriteHeader(http.StatusInternalServerError)
+		utils.WriteJson("id claim not found in token", w)
+		return
+	}
+
+	idStr, ok := idClaim.(string)
+	if !ok {
+		fmt.Println("fail to claim id to string, error: ", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		utils.WriteJson(err, w)
+		return
+	}
+
+	id, err := primitive.ObjectIDFromHex(idStr)
+	if err != nil {
+		fmt.Println("fail to convert id string to mongo object, error: ", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		utils.WriteJson(err, w)
+		return
+	}
+
+	post.UserId = &id
 	res, err := h.service.add(r.Context(), &post)
 
 	if err != nil {

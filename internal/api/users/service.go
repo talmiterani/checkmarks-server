@@ -19,6 +19,14 @@ func NewService(sdc *access.DbConnections) *Service {
 	}
 }
 
-func (s *Service) add(ctx context.Context, user *users.User) error {
-	return s.repo.Add(ctx, user)
+func (s *Service) signup(ctx context.Context, user *users.User) error {
+	return s.repo.Signup(ctx, user)
+}
+
+func (s *Service) checkUniqueUsername(ctx context.Context, username string) (bool, error) {
+	return s.repo.CheckUniqueUsername(ctx, username)
+}
+
+func (s *Service) get(ctx context.Context, req *users.User) (*users.User, error) {
+	return s.repo.Get(ctx, req)
 }

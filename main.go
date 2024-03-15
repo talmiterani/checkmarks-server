@@ -35,30 +35,18 @@ func main() {
 	}
 
 	for i := 0; i < len(appHandlers); i++ {
-		appHandlers[i].Init(router) //, authHandler)
+		appHandlers[i].Init(router)
 	}
-
-	// api handlers -
-	// to be used with no auth by EM APi's
-	//apiHandlers := []internal.ApiHandler{
-	//	matching.NewCategoriesApiHandler(sdc),
-	//}
 
 	fmt.Println("done init all proper handlers")
 
-	headersOk := handlers.AllowedHeaders([]string{"X-Requested-With", "Authorization", "ACCEPT", "CONTENT-TYPE", "X-CB-EnvDb"})
+	headersOk := handlers.AllowedHeaders([]string{"X-Requested-With", "Authorization", "ACCEPT", "CONTENT-TYPE", "X-CB-EnvDb", "token"})
 	methodsOk := handlers.AllowedMethods([]string{"GET", "HEAD", "POST", "PUT", "DELETE"})
 
 	srv := &http.Server{
 		Handler: handlers.CORS(headersOk, methodsOk)(
 			handlers.CompressHandler(
-				//middlewares.EnvMiddleW(
-				//	authHandler.Authenticate(
-				//		middlewares.Finalize(config, sdc)(
 				router,
-				//		),
-				//	),
-				//),
 			),
 		),
 		Addr:         ":" + strconv.Itoa(c.Server.Port),

@@ -8,6 +8,7 @@ import (
 
 type Post struct {
 	Id      *primitive.ObjectID `json:"id,omitempty"  bson:"_id,omitempty"`
+	UserId  *primitive.ObjectID `json:"user_id,omitempty"  bson:"_userId,omitempty"`
 	Author  string              `json:"author,omitempty" bson:"author"`
 	Content string              `json:"content,omitempty" bson:"content"`
 	Title   string              `json:"title,omitempty" bson:"title"`
