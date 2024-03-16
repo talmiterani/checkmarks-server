@@ -20,7 +20,7 @@ func New(sdc *access.DbConnections) PostsRepo {
 	return &PostsDb{sdc}
 }
 
-func (p *PostsDb) Search(ctx context.Context, req *commonModels.SearchReq) ([]models.SearchPostsRes, error) {
+func (p *PostsDb) Search(ctx context.Context, req *commonModels.SearchReq) ([]models.SearchPosts, int, error) {
 
 	pipeline := bson.A{
 		bson.M{
@@ -29,6 +29,36 @@ func (p *PostsDb) Search(ctx context.Context, req *commonModels.SearchReq) ([]mo
 					bson.M{"title": primitive.Regex{Pattern: req.Query, Options: "i"}},
 					bson.M{"content": primitive.Regex{Pattern: req.Query, Options: "i"}},
 				},
+			},
+		},
+
+		bson.M{
+			"$lookup": bson.D{
+				{"from", "comments"},
+				{"localField", "_id"},
+				{"foreignField", "_postId"},
+				{"as", "comments"},
+			},
+		},
+		bson.M{
+			"$lookup": bson.M{
+				"from": "users",
+				"let":  bson.M{"userId": "$_userId"},
+				"pipeline": bson.A{
+					bson.M{"$match": bson.M{"$expr": bson.M{"$eq": bson.A{"$_id", "$$userId"}}}},
+				},
+				"as": "user",
+			},
+		},
+		bson.M{
+			"$project": bson.M{
+				"_id":          1,
+				"author":       1,
+				"title":        1,
+				"content":      1,
+				"updated":      1,
+				"comments_cnt": bson.M{"$size": "$comments"},
+				"username":     bson.M{"$arrayElemAt": bson.A{"$user.username", 0}}, // Extract username as string
 			},
 		},
 		bson.M{
@@ -40,46 +70,83 @@ func (p *PostsDb) Search(ctx context.Context, req *commonModels.SearchReq) ([]mo
 		bson.M{
 			"$limit": req.PageSize,
 		},
-		bson.M{
-			"$lookup": bson.D{
-				{"from", "comments"},
-				{"localField", "_id"},
-				{"foreignField", "_postId"},
-				{"as", "comments"},
+	}
+	if req.UserId != nil {
+		matchStage := bson.M{
+			"$match": bson.M{
+				"_userId": req.UserId,
 			},
-		},
-		bson.M{
-			"$project": bson.M{
-				"_id":          1,
-				"author":       1,
-				"title":        1,
-				"content":      1,
-				"updated":      1,
-				"comments_cnt": bson.M{"$size": "$comments"},
-			},
-		},
+		}
+		pipeline = append(bson.A{matchStage}, pipeline...)
 	}
 
 	cur, err := p.Mongo.Posts.Aggregate(ctx, pipeline)
 
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	defer cur.Close(ctx)
 
-	var posts []models.SearchPostsRes
+	var posts []models.SearchPosts
 	for cur.Next(ctx) {
-		var post models.SearchPostsRes
+		var post models.SearchPosts
 		err = cur.Decode(&post)
 		if err != nil {
-			return nil, err
+			return nil, 0, err
 		}
 		posts = append(posts, post)
 	}
 
-	return posts, nil
+	total, err := p.getTotalPostsCount(ctx, req.UserId, req.Query)
+
+	return posts, total, nil
 }
 
+func (p *PostsDb) getTotalPostsCount(ctx context.Context, userId *primitive.ObjectID, query string) (int, error) {
+	pipeline := bson.A{}
+
+	if userId != nil {
+		matchStage := bson.M{
+			"$match": bson.M{"_userId": userId},
+		}
+		pipeline = append(pipeline, matchStage)
+	}
+
+	if query != "" {
+		queryMatchStage := bson.M{
+			"$match": bson.M{
+				"$or": bson.A{
+					bson.M{"title": primitive.Regex{Pattern: query, Options: "i"}},
+					bson.M{"content": primitive.Regex{Pattern: query, Options: "i"}},
+				},
+			},
+		}
+		pipeline = append(pipeline, queryMatchStage)
+	}
+
+	countStage := bson.M{
+		"$count": "total",
+	}
+	pipeline = append(pipeline, countStage)
+
+	cur, err := p.Mongo.Posts.Aggregate(ctx, pipeline)
+	if err != nil {
+		return 0, err
+	}
+	defer cur.Close(ctx)
+
+	var countResult struct {
+		Total int `bson:"total"`
+	}
+	if cur.Next(ctx) {
+		err := cur.Decode(&countResult)
+		if err != nil {
+			return 0, err
+		}
+	}
+
+	return countResult.Total, nil
+}
 func (p *PostsDb) Get(ctx context.Context, postId string) (*bson.M, error) {
 
 	postID, err := primitive.ObjectIDFromHex(postId)
@@ -91,7 +158,6 @@ func (p *PostsDb) Get(ctx context.Context, postId string) (*bson.M, error) {
 		return nil, err
 	}
 
-	// Define the pipeline with $lookup stage
 	pipeline := bson.A{
 		bson.M{
 			"$match": bson.M{"_id": postID},
@@ -111,28 +177,49 @@ func (p *PostsDb) Get(ctx context.Context, postId string) (*bson.M, error) {
 			},
 		},
 		bson.M{
+			"$lookup": bson.M{
+				"from":         "users",
+				"localField":   "comments._userId",
+				"foreignField": "_id",
+				"as":           "commentUser",
+			},
+		},
+		bson.M{
 			"$sort": bson.M{"comments.updated": -1},
 		},
 		bson.M{
+			"$lookup": bson.M{
+				"from":         "users",
+				"localField":   "_userId",
+				"foreignField": "_id",
+				"as":           "postUser",
+			},
+		},
+		bson.M{
 			"$group": bson.M{
-				"_id":      "$_id",
-				"author":   bson.M{"$first": "$author"},
-				"content":  bson.M{"$first": "$content"},
-				"updated":  bson.M{"$first": "$updated"},
-				"comments": bson.M{"$push": "$comments"},
+				"_id":     "$_id",
+				"author":  bson.M{"$first": "$author"},
+				"content": bson.M{"$first": "$content"},
+				"updated": bson.M{"$first": "$updated"},
+				"comments": bson.M{"$push": bson.M{
+					"_id":      "$comments._id",
+					"content":  "$comments.content",
+					"updated":  "$comments.updated",
+					"username": bson.M{"$arrayElemAt": bson.A{"$commentUser.username", 0}}, // Include comment author's username
+					"userId":   bson.M{"$arrayElemAt": bson.A{"$commentUser._id", 0}},      // Include comment author's username
+				}},
 				"title":    bson.M{"$first": "$title"},
+				"username": bson.M{"$first": "$postUser.username"}, // Include post author's username
 			},
 		},
 	}
 
-	// Use aggregate with the defined pipeline
 	cur, err := p.DbConnections.Mongo.Posts.Aggregate(ctx, pipeline)
 	if err != nil {
 		return nil, err
 	}
 	defer cur.Close(ctx)
 
-	// Decode the result
 	var results []bson.M
 	if err := cur.All(ctx, &results); err != nil {
 		return nil, err

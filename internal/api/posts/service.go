@@ -22,8 +22,17 @@ func NewService(sdc *access.DbConnections) *Service {
 	}
 }
 
-func (s *Service) search(ctx context.Context, req *commonModels.SearchReq) ([]models.SearchPostsRes, error) {
-	return s.repo.Search(ctx, req)
+func (s *Service) search(ctx context.Context, req *commonModels.SearchReq) (*models.SearchPostsRes, error) {
+	posts, total, err := s.repo.Search(ctx, req)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &models.SearchPostsRes{
+		Posts: posts,
+		Total: total,
+	}, nil
 }
 
 //func (s *Service) search(ctx context.Context, req *commonModels.SearchReq) ([]models.Post, error) {

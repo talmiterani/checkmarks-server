@@ -67,7 +67,7 @@ func (h *Handler) add(w http.ResponseWriter, r *http.Request) {
 
 	comment.Prepare()
 
-	if valRes := comment.Validate(true, true, false); len(valRes) > 0 {
+	if valRes := comment.Validate(true, false); len(valRes) > 0 {
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte(valRes))
 		return
@@ -133,7 +133,7 @@ func (h *Handler) update(w http.ResponseWriter, r *http.Request) {
 	}
 
 	comment.Prepare()
-	if valRes := comment.Validate(false, false, true); len(valRes) > 0 {
+	if valRes := comment.Validate(false, true); len(valRes) > 0 {
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte(valRes))
 		return

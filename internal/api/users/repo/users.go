@@ -4,7 +4,10 @@ import (
 	"checkmarks/internal/api/common/access"
 	"checkmarks/pkg/users"
 	"context"
+	"errors"
+	"fmt"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type UsersDb struct {
@@ -15,9 +18,21 @@ func New(sdc *access.DbConnections) UsersRepo {
 	return &UsersDb{sdc}
 }
 
-func (u *UsersDb) Signup(ctx context.Context, user *users.User) error {
-	_, err := u.Mongo.Users.InsertOne(ctx, user)
-	return err
+func (u *UsersDb) Signup(ctx context.Context, user *users.User) (*primitive.ObjectID, error) {
+
+	inserted, err := u.Mongo.Users.InsertOne(ctx, user)
+	if err != nil {
+		return nil, err
+	}
+
+	insertedID, ok := inserted.InsertedID.(primitive.ObjectID)
+	if !ok {
+		return nil, errors.New("failed to convert insertedID to objectID")
+	}
+
+	fmt.Println("added new user: ", inserted)
+
+	return &insertedID, nil
 }
 
 func (u *UsersDb) CheckUniqueUsername(ctx context.Context, username string) (bool, error) {

@@ -20,7 +20,15 @@ func NewService(sdc *access.DbConnections) *Service {
 }
 
 func (s *Service) signup(ctx context.Context, user *users.User) error {
-	return s.repo.Signup(ctx, user)
+
+	newId, err := s.repo.Signup(ctx, user)
+
+	if err != nil {
+		return err
+	}
+
+	user.Id = newId
+	return nil
 }
 
 func (s *Service) checkUniqueUsername(ctx context.Context, username string) (bool, error) {

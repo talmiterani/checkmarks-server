@@ -7,7 +7,6 @@ import (
 )
 
 type Comment struct {
-	Author  string              `json:"author" bson:"author,omitempty"`
 	Content string              `json:"content" bson:"content,omitempty"`
 	Id      *primitive.ObjectID `json:"id,omitempty"  bson:"_id,omitempty"`
 	PostId  *primitive.ObjectID `json:"post_id,omitempty"  bson:"_postId,omitempty"`
@@ -15,11 +14,7 @@ type Comment struct {
 	Updated *time.Time          `json:"updated,omitempty" bson:"updated"`
 }
 
-func (c *Comment) Validate(validateAuthor, validatePostId, validateId bool) string {
-
-	if validateAuthor && c.Author == "" { //todo Author should be base on the connected users (author = username)
-		return "missing author"
-	}
+func (c *Comment) Validate(validatePostId, validateId bool) string {
 
 	if c.Content == "" {
 		return "missing content"

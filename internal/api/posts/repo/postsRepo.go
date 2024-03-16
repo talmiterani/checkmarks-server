@@ -9,8 +9,7 @@ import (
 )
 
 type PostsRepo interface {
-	Search(ctx context.Context, req *commonModels.SearchReq) ([]models.SearchPostsRes, error)
-	//Search(ctx context.Context, req *commonModels.SearchReq) ([]models.Post, error)
+	Search(ctx context.Context, req *commonModels.SearchReq) ([]models.SearchPosts, int, error)
 	Get(ctx context.Context, postId string) (*bson.M, error)
 	Add(ctx context.Context, post *models.Post) (*primitive.ObjectID, error)
 	Update(ctx context.Context, post *models.Post) error
