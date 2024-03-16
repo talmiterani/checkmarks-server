@@ -206,10 +206,10 @@ func (p *PostsDb) Get(ctx context.Context, postId string) (*bson.M, error) {
 					"content":  "$comments.content",
 					"updated":  "$comments.updated",
 					"username": bson.M{"$arrayElemAt": bson.A{"$commentUser.username", 0}}, // Include comment author's username
-					"userId":   bson.M{"$arrayElemAt": bson.A{"$commentUser._id", 0}},      // Include comment author's username
+					"user_id":  bson.M{"$arrayElemAt": bson.A{"$commentUser._id", 0}},      // Include comment author's username
 				}},
-				"title":    bson.M{"$first": "$title"},
-				"username": bson.M{"$first": "$postUser.username"}, // Include post author's username
+				"title":        bson.M{"$first": "$title"},
+				"postUsername": bson.M{"$first": "$postUser.username"}, // Include post author's username
 			},
 		},
 	}
